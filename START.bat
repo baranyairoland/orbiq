@@ -30,4 +30,10 @@ if errorlevel 1 (
   exit /b 1
 )
 
-start "" pyw orbiq.py
+where pyw >nul 2>nul
+if errorlevel 1 (
+  py orbiq.py
+  if errorlevel 1 pause
+) else (
+  start "" pyw orbiq.py
+)
