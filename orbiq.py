@@ -1656,22 +1656,30 @@ class App(tk.Tk):
 
     # ---- frissítő ciklus -----------------------------------------------------
     def refresh(self):
+        t0 = time.perf_counter()
+        parts = {}
         try:
             snap = self.engine.snap
             if snap:
-                self._update_topbar(snap)
-                self.request_all_passes()
-                self._refresh_next()
-                self._update_tree(snap)
-                self._update_satstab(snap)
-                self._update_freq(snap)
-                self._update_passhdr()
-                self._check_ptable()
-                self.request_passes()
-                self._draw_sky(snap)
-                self._update_log()
+                for name, fn, args in (
+                        ("topbar", self._update_topbar, (snap,)), ("allpasses", self.request_all_passes, ()),
+                        ("next", self._refresh_next, ()), ("tree", self._update_tree, (snap,)),
+                        ("sats", self._update_satstab, (snap,)), ("freq", self._update_freq, (snap,)),
+                        ("passhdr", self._update_passhdr, ()), ("ptable", self._check_ptable, ()),
+                        ("passes", self.request_passes, ()), ("sky", self._draw_sky, (snap,)),
+                        ("log", self._update_log, ())):
+                    t1 = time.perf_counter()
+                    fn(*args)
+                    parts[name] = time.perf_counter() - t1
         except Exception as e:               # noqa: BLE001
             self.engine.log.append((time.time(), tl("app.feluleti_hiba_e_r", e=e)))
+        total = time.perf_counter() - t0
+        now = time.time()
+        if total > 0.15 and now - getattr(self, "_slow_log_t", 0) > 120:      # lassú felületfrissítés: a napló mutatja, mi viszi el az időt
+            self._slow_log_t = now
+            top = sorted(parts.items(), key=lambda kv: -kv[1])[:3]
+            self.engine.log.append((now, tl("app.slow_ui", ms=int(total * 1000),
+                                            top=", ".join(f"{k} {int(v * 1000)} ms" for k, v in top))))
         self.after(250, self.refresh)
 
     def _cfg(self, w, **kw):
@@ -1891,6 +1899,13 @@ class App(tk.Tk):
         old = self._sky_sig
         if old is not None and old[0] is sig[0] and old[1] is sig[1] and old[2:] == sig[2:]:
             return                                   # nem változott semmi - nem rajzoljuk újra
+        now = time.perf_counter()
+        # Ha csak a műholdak mozdultak el (másodpercenként újraszámolt pozíciók), elég másodpercenként rajzolni:
+        # a rajzolás drága (3x felbontás + átméretezés), és a felület szálán fut.
+        if (old is not None and old[1] is sig[1] and old[2:] == sig[2:]
+                and now - getattr(self, "_sky_t", 0.0) < 1.0):
+            return
+        self._sky_t = now
         self._sky_sig = sig
         c.delete("all")
         P = skyplot.make_painter(c, w, h, "#10161c")
