@@ -7,10 +7,14 @@ where py >nul 2>nul
 if errorlevel 1 (
   echo.
   echo Python is not installed on this computer. / A Python nincs telepítve ezen a gépen.
-  echo 1. Download / Töltsd le: https://www.python.org/downloads/windows/
-  echo 2. During setup tick "Add python.exe to PATH" and "tcl/tk and IDLE".
-  echo    Telepítéskor pipáld be: "Add python.exe to PATH" és "tcl/tk and IDLE".
-  echo 3. Then run this file again. / Utána futtasd újra ezt a fájlt.
+  echo 1. On the page that opens, download "Python 3.13" - "Windows installer (64-bit)".
+  echo    A megnyíló oldalon töltsd le: "Python 3.13" - "Windows installer (64-bit)".
+  echo 2. On the first screen of the installer tick "Add python.exe to PATH", then click Install Now.
+  echo    A telepítő első képernyőjén pipáld be: "Add python.exe to PATH", majd Install Now.
+  echo 3. Close this window and run START.bat again. / Zárd be ezt az ablakot, és futtasd újra a START.bat-ot.
+  echo.
+  echo Tip: no Python needed if you use Orbiq.exe from the Releases page on GitHub.
+  echo Tipp: Python nélkül is megy az Orbiq.exe a GitHub Releases oldaláról.
   echo.
   start https://www.python.org/downloads/windows/
   pause
