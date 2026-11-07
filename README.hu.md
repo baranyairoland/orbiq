@@ -1,4 +1,8 @@
-# Orbiq
+<p align="center">
+  <img src="assets/logo.png" width="160" alt="Orbiq logo">
+</p>
+
+<h1 align="center">Orbiq</h1>
 
 **Műholdkövető program Doppler-korrekcióval, SDR++ vezérléssel** (Windows, grafikus felület, parancssor nélkül).
 
