@@ -28,4 +28,10 @@ visszaáll az utolsó ép mentésre. A **Beállítások → Adatok és biztonsá
 
 
 ## Kapcsolat
-Kérdések, hibajelentések, ötletek: **orbiq_tracker@icloud.com**. Hibánál kérlek írd meg az Orbiq verzióját (az ablak címsorában látszik), és csatolj képernyőképet.
+- Telegram-csoport: **[Orbiq Sat Tracker](https://t.me/orbiq_tracker)** – kérdések, hibák, ötletek
+- E-mail: **orbiq_tracker@icloud.com**
+
+Hibánál kérlek írd meg az Orbiq verzióját (az ablak címsorában látszik), és csatolj képernyőképet.
+
+## Licenc
+MIT – lásd a [LICENSE](LICENSE) fájlt. Ez egy béta verzió; a visszajelzéseket nagyon szívesen várom.

@@ -43,4 +43,10 @@ Settings from older versions (`%APPDATA%\Orbiq`) are taken over automatically on
 
 
 ## Contact
-Questions, bug reports and ideas: **orbiq_tracker@icloud.com**. When reporting a bug, please include the Orbiq version (shown in the window title) and a screenshot.
+- Telegram group: **[Orbiq Sat Tracker](https://t.me/orbiq_tracker)** – questions, bugs, ideas
+- E-mail: **orbiq_tracker@icloud.com**
+
+When reporting a bug, please include the Orbiq version (shown in the window title) and a screenshot.
+
+## License
+MIT – see [LICENSE](LICENSE). This is a beta version; feedback is very welcome.
