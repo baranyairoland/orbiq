@@ -53,6 +53,12 @@ class TkPainter:
         self.c.create_text(x, y, text=text, fill=fill, anchor=anchor,
                            font=("Segoe UI", size, "bold" if bold else "normal"))
 
+    def restore_static(self, key):
+        return False
+
+    def save_static(self, key):
+        pass
+
     def flush(self):
         pass
 
@@ -106,8 +112,23 @@ class SkyPainter:
     def text(self, x, y, text, fill, size=9, bold=False, anchor="center"):
         self.texts.append((x, y, text, fill, size, bold, anchor))
 
+    _static = {}                # (kulcs -> (kép, feliratok)): az állandó háttér (körök, irányok) egyszer készül el
+
+    def restore_static(self, key):
+        got = SkyPainter._static.get(key)
+        if got is None:
+            return False
+        self.img = got[0].copy()
+        self.d = ImageDraw.Draw(self.img)
+        self.texts = list(got[1])
+        return True
+
+    def save_static(self, key):
+        SkyPainter._static.clear()
+        SkyPainter._static[key] = (self.img.copy(), list(self.texts))
+
     def image(self):
-        return self.img.resize((self.w, self.h), Image.LANCZOS)
+        return self.img.reduce(self.ss)         # dobozszűrős lekicsinyítés: gyors és élsimított (a LANCZOS ~20x lassabb volt)
 
     def flush(self):
         from PIL import ImageTk
@@ -185,17 +206,20 @@ def draw_sky(P, w, h, snap, g_min, sel):
     cx, cy = w / 2.0, h / 2.0
     R = max(10.0, min(w, h) / 2.0 - 26)
     grid, txt = "#2a3640", "#7f93a3"
-    for el in (0, 30, 60):
-        r = R * (90 - el) / 90.0
-        P.circle(cx, cy, r, outline=grid, width=1.3)
-        if el:
-            P.text(cx + 4, cy - r + 8, f"{el}°", txt, 8, anchor="w")
-    for az, lab in ((0, tl("compass.n")), (90, tl("compass.e")), (180, tl("compass.s")), (270, tl("compass.w"))):
-        x, y = polar_xy(az, 0, cx, cy, R)
-        P.line([(cx, cy), (x, y)], grid, 1.3)
-        lx, ly = polar_xy(az, -7, cx, cy, R + 4)
-        P.text(lx, ly, lab, "#c9d4dc", 10, True)
-    P.dashed_circle(cx, cy, R * (90 - g_min) / 90.0, "#b8860b", 1.5)
+    skey = (w, h, round(g_min, 3), tl("compass.n"))
+    if not P.restore_static(skey):
+        for el in (0, 30, 60):
+            r = R * (90 - el) / 90.0
+            P.circle(cx, cy, r, outline=grid, width=1.3)
+            if el:
+                P.text(cx + 4, cy - r + 8, f"{el}°", txt, 8, anchor="w")
+        for az, lab in ((0, tl("compass.n")), (90, tl("compass.e")), (180, tl("compass.s")), (270, tl("compass.w"))):
+            x, y = polar_xy(az, 0, cx, cy, R)
+            P.line([(cx, cy), (x, y)], grid, 1.3)
+            lx, ly = polar_xy(az, -7, cx, cy, R + 4)
+            P.text(lx, ly, lab, "#c9d4dc", 10, True)
+        P.dashed_circle(cx, cy, R * (90 - g_min) / 90.0, "#b8860b", 1.5)
+        P.save_static(skey)
     order = sorted(snap["sats"])
     for n in order:
         info = snap["sats"][n]
