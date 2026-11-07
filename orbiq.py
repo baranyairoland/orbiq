@@ -618,7 +618,9 @@ class App(tk.Tk):
                                                            parent=self))
         self.bg.run(engine.measure_ntp, self._ntp_done)
         self.after(3000, self.auto_tle)
+        self._fast_snap = None
         self.after(250, self.refresh)
+        self.after(300, self._fast_tick)
 
     # ---- felső sáv -----------------------------------------------------
     def _build_topbar(self):
@@ -1681,6 +1683,20 @@ class App(tk.Tk):
             self.engine.log.append((now, tl("app.slow_ui", ms=int(total * 1000),
                                             top=", ".join(f"{k} {int(v * 1000)} ms" for k, v in top))))
         self.after(250, self.refresh)
+
+    def _fast_tick(self):
+        """Gyors (kb. 30 Hz) frissítés csak a nagy frekvenciakijelzőnek, hogy ugyanolyan gyorsan járjon, mint az SDR++."""
+        try:
+            snap = self.engine.snap
+            if snap and snap is not self._fast_snap:
+                self._fast_snap = snap
+                live = snap.get("live")
+                cur = snap.get("current")
+                if cur is not None and live and cur in self.engine.sats:
+                    self.freq.set_state(live["freq"], True)
+        except Exception:               # noqa: BLE001
+            pass
+        self.after(33, self._fast_tick)
 
     def _cfg(self, w, **kw):
         """widget.configure, de csak ha tényleg változott valami (a felesleges beállítás újrarajzolást okoz)."""
