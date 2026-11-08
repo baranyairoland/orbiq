@@ -619,6 +619,9 @@ class App(tk.Tk):
         self.bg.run(engine.measure_ntp, self._ntp_done)
         self.after(3000, self.auto_tle)
         self._fast_snap = None
+        self._ui_ema = {"total": 0.0}
+        self._slow_log_t = 0.0
+        self._sky_t = 0.0
         self.after(250, self.refresh)
         self.after(300, self._fast_tick)
 
@@ -1678,12 +1681,10 @@ class App(tk.Tk):
         total = time.perf_counter() - t0
         now = time.time()
         # Mozgóátlag: az indításkori egyszeri lassúság (betűtípus-, képtár-betöltés) nem számít, csak a tartós lassúság.
-        ema = getattr(self, "_ema", None)
-        if ema is None:
-            ema = self._ema = {"total": 0.0}
+        ema = self._ui_ema
         for k, v in (("total", total), *parts.items()):
             ema[k] = ema.get(k, 0.0) * 0.9 + v * 0.1
-        if ema["total"] > 0.08 and now - getattr(self, "_slow_log_t", 0) > 120:      # tartósan lassú felületfrissítés -> napló
+        if ema["total"] > 0.08 and now - self._slow_log_t > 120:      # tartósan lassú felületfrissítés -> napló
             self._slow_log_t = now
             top = sorted(((k, v) for k, v in ema.items() if k != "total"), key=lambda kv: -kv[1])[:3]
             self.engine.log.append((now, tl("app.slow_ui", ms=int(ema["total"] * 1000),
@@ -1925,7 +1926,7 @@ class App(tk.Tk):
         # Ha csak a műholdak mozdultak el (másodpercenként újraszámolt pozíciók), elég másodpercenként rajzolni:
         # a rajzolás drága (3x felbontás + átméretezés), és a felület szálán fut.
         if (old is not None and old[1] is sig[1] and old[2:] == sig[2:]
-                and now - getattr(self, "_sky_t", 0.0) < 1.0):
+                and now - self._sky_t < 1.0):
             return
         self._sky_t = now
         self._sky_sig = sig
