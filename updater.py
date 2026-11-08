@@ -209,7 +209,9 @@ def install_zip(data: bytes, base: str | None = None) -> dict:
 def restart_command(base: str | None = None) -> tuple[list, str]:
     """(parancs, munkamappa) az újraindításhoz: a START.bat (az új csomagokat is telepíti), különben közvetlenül."""
     base = base or app_dir()
-    bat = os.path.join(base, "START.bat")
-    if os.name == "nt" and os.path.isfile(bat):
-        return ["cmd", "/c", "start", "", "START.bat"], base
-    return [sys.executable, os.path.join(base, "orbiq.py")], base
+    exe = sys.executable
+    if os.name == "nt":                      # konzolablak nélküli értelmező (pythonw), hogy ne maradjon fekete ablak
+        w = os.path.join(os.path.dirname(exe), "pythonw.exe")
+        if os.path.isfile(w):
+            exe = w
+    return [exe, os.path.join(base, "orbiq.py")], base

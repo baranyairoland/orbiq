@@ -21,23 +21,37 @@ It can also start and stop the SDR++ recorder at AOS / LOS.
 - AOS / LOS commands for the SDR++ recorder, update interval 1–1000 ms
 - Time sync (NTP offset, optional Windows clock sync); precise station position (decimal degrees, Windows location, USB GPS) with a Google Maps check button
 
-## Quick start
-**Option A – `Orbiq.exe` (easiest, nothing to install).**
-Download `Orbiq.exe` from the [Releases](https://github.com/baranyairoland/orbiq/releases) page and put it in its own folder (e.g. `C:\Radio\Orbiq`) – your data is saved next to it.
+## Installation (Windows)
+Orbiq runs as a Python program; there is no separate installer. The steps below take a few minutes.
 
-> Windows may show *"Windows protected your PC"* (SmartScreen): click **More info → Run anyway**.
-> Some antivirus programs may also flag the file as a false positive (typically `Trojan:Script/Sabsik.FL.A!ml`), because the EXE is unsigned and made with PyInstaller. The EXE is built automatically by GitHub from the public source code in this repository (see *Actions*). If it gets blocked, allow it in *Windows Security → Protection history*, or use Option B.
+### Step 1 – install Python (once)
+1. Open [python.org/downloads/windows](https://www.python.org/downloads/windows/).
+2. Find the latest **Python 3.13** release and download the **"Windows installer (64-bit)"** file. (Not the "embeddable package" and not the 32-bit installer.)
+3. Run the downloaded file. **On the very first screen, before installing:**
+   - **Tick the "Add python.exe to PATH" box at the bottom.** This is the most important step! Without it START.bat cannot find Python.
+   - Leave "Use admin privileges when installing py.exe" (if shown) at its default.
+   - Then click **"Install Now"** (you do not need "Customize installation").
+4. If Windows asks "Do you want to allow this app to make changes?", answer **Yes**.
+5. On the "Setup was successful" screen click **Close**. (If you see "Disable path length limit", you may click it too, but it is not required.)
 
-**Option B – run from source.**
-1. Install **Python 3.13 (64-bit)** from [python.org/downloads/windows](https://www.python.org/downloads/windows/) – choose *Windows installer (64-bit)* and tick **Add python.exe to PATH** on the first screen.
-2. Download this repository (*Code → Download ZIP*) and extract it.
-3. Run `START.bat` – it installs the needed packages (internet needed, the first start is slow) and starts the program.
+### Step 2 – download Orbiq
+1. On the GitHub page click the green **Code** button, then **Download ZIP**.
+2. **Extract** the ZIP into a folder of your own, e.g. `C:\Radio\Orbiq`. Extracting is mandatory: run the program from the extracted folder, not from inside the ZIP.
+3. Your data (satellite list, settings) is saved next to the program in the `data` folder.
 
-**Then, in both cases:**
+### Step 3 – start it
+1. Open the extracted folder and double-click **`START.bat`**.
+2. On the first start a black window appears and downloads the required packages. Internet is needed and it can take a minute or two. Yellow *WARNING* lines are usually harmless – just wait.
+3. Then the Orbiq window opens. Later starts are fast.
+4. If START.bat says Python is not installed although you installed it, either the **Add python.exe to PATH** tick was missed (run the Python installer again, choose **Modify**, then *Add Python to environment variables*) or you did not close and reopen START.bat after the installation.
+
+To update later you do not have to download the ZIP again: use **Settings → Update → Check for updates** to update in one step.
+
+### Then
 1. In SDR++: add the **rigctl_server** module, port `4532`, press *Start*.
 2. In Orbiq: *Settings* → enter your position → *Apply and save*, then *Add satellite*.
 
-You can also build the EXE yourself with `BUILD_EXE.bat`.
+If you want a standalone `.exe`, you can build one yourself from the source with PyInstaller.
 
 ## Status
 Early development. Tested on live passes with SDR++ (UmKA-1). Feedback and bug reports are welcome.

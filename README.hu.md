@@ -8,24 +8,38 @@
 
 *English: see [README.md](README.md).*
 
-## Első indítás
-**A) lehetőség – `Orbiq.exe` (a legegyszerűbb, nem kell semmit telepíteni).**
-Töltsd le az `Orbiq.exe`-t a [Releases](https://github.com/baranyairoland/orbiq/releases) oldalról, és tedd egy saját mappába (pl. `C:\Radio\Orbiq`) – az adataid mellé mentődnek.
+## Telepítés (Windows)
+Az Orbiq Python programként fut, külön telepítő nincs. Az alábbi lépésekkel pár perc alatt elindítható.
 
-> A Windows *„A Windows megvédte a számítógépét”* üzenetet (SmartScreen) mutathat: kattints a **További információ → Futtatás mindenképp** gombra.
-> Egyes víruskeresők téves riasztást is adhatnak (jellemzően `Trojan:Script/Sabsik.FL.A!ml`), mert az EXE aláíratlan és PyInstallerrel készült. Az EXE-t a GitHub építi automatikusan a tárolóban lévő nyilvános forráskódból (lásd *Actions*). Ha blokkolja, engedélyezd a *Windows Biztonság → Védelmi előzmények* részen, vagy használd a B) lehetőséget.
+### 1. lépés – a Python telepítése (egyszer kell)
+1. Nyisd meg a [python.org/downloads/windows](https://www.python.org/downloads/windows/) oldalt.
+2. Keresd meg a **Python 3.13** legújabb kiadását, és töltsd le a **„Windows installer (64-bit)”** fájlt. (Ne az „embeddable package”-et és ne a „Windows installer (32-bit)”-et.)
+3. Indítsd el a letöltött fájlt. **Az első képernyőn, még a telepítés előtt:**
+   - **Pipáld be alul az „Add python.exe to PATH” dobozt.** Ez a legfontosabb! Enélkül a START.bat nem találja a Pythont.
+   - Ha van ott „Use admin privileges when installing py.exe” jelölőnégyzet, az maradhat az alapértelmezett állapotában.
+   - Utána kattints az **„Install Now”** gombra (a „Customize installation” nem kell).
+4. Ha a Windows rákérdez („Engedélyezed, hogy az alkalmazás módosításokat hajtson végre?”), válaszolj **Igen**-nel.
+5. A végén, a „Setup was successful” képernyőn kattints a **Close** gombra. (Ha látsz „Disable path length limit” lehetőséget, azt is bepipálhatod, de nem kötelező.)
 
-**B) lehetőség – futtatás forrásból.**
-1. Telepítsd a **Python 3.13-at (64 bites)** a [python.org/downloads/windows](https://www.python.org/downloads/windows/) oldalról: válaszd a *Windows installer (64-bit)* fájlt, és az első képernyőn pipáld be az **Add python.exe to PATH** opciót.
-2. Töltsd le a tárolót (*Code → Download ZIP*), és csomagold ki (pl. `C:\Radio\Orbiq`).
-3. Dupla kattintás: **`START.bat`** – az első alkalommal telepíti a hozzá kellő csomagokat (internet kell, lassú lehet), utána elindul a program.
+### 2. lépés – az Orbiq letöltése
+1. A GitHub-oldalon kattints a zöld **Code** gombra, majd a **Download ZIP** pontra.
+2. Csomagold ki a letöltött ZIP-et egy saját mappába, például `C:\Radio\Orbiq`. A kicsomagolás **kötelező**: ne a ZIP-ből, hanem a kicsomagolt mappából indítsd.
+3. Az adataid (műholdlista, beállítások) a program mellé, a `data` mappába mentődnek.
 
-**Utána, mindkét esetben:**
+### 3. lépés – az indítás
+1. Nyisd meg a kicsomagolt mappát, és kattints duplán a **`START.bat`** fájlra.
+2. Az első indításnál egy fekete ablak jelenik meg, és letölti a szükséges csomagokat. Ehhez internet kell, és eltarthat egy-két percig. A sorok közt látható sárga *WARNING* feliratok általában ártalmatlanok, csak várj.
+3. Ezután megnyílik az Orbiq ablaka. A következő indításoktól már gyorsan indul.
+4. Ha a START.bat azt írja, hogy a Python nincs telepítve, pedig telepítetted, akkor vagy kimaradt az **Add python.exe to PATH** pipa (futtasd újra a Python-telepítőt, válaszd a **Modify**, majd a *Add Python to environment variables* opciót), vagy a telepítés után nem zártad be és nyitottad meg újra a START.bat-ot.
+
+A program későbbi frissítéséhez nem kell újra letöltened a ZIP-et: a **Beállítások → Frissítés** részen a *Frissítés keresése* gombbal egy lépésben frissíthetsz.
+
+### Utána
 1. **Beállítások** fül: írd be az állomásod szélesség/hosszúság koordinátáját (tizedfokban, pl. `47.123456` / `17.123456`), a **📍** gombbal ellenőrizheted Google Térképen, majd **Alkalmaz és mentés**.
 2. SDR++-ban: *Module Manager* → `rigctl_server` hozzáadása → port `4532` → *Start*. A Beállítások fülön a **Kapcsolat tesztelése** gombbal ellenőrizheted.
 3. **Követés** fül → **Műhold hozzáadása**: NORAD ID (pl. `25544`), Keresés, válaszd ki a frekvenciát, Mentés.
 
-Az EXE-t magad is elkészítheted a **`BUILD_EXE.bat`**-tal (eredmény: `dist\Orbiq.exe`).
+Ha valaki saját, önálló `.exe`-t szeretne, a PyInstaller segítségével magának lefordíthatja a forrásból.
 
 ## Az adataid és a biztonsági mentés
 Minden adatod (műholdlista, frekvenciák, állomás helyzete, ütemezés, TLE-k) a program mellett, a **`data`** mappában

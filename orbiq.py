@@ -1553,7 +1553,16 @@ class App(tk.Tk):
         self.v_upd.set(tl("update.downloading"))
 
         def work():
-            return updater.install_zip(updater.download(r["sha"]))
+            res = updater.install_zip(updater.download(r["sha"]))
+            if res.get("requirements"):         # új csomagok kellhetnek: csendben, külön ablak nélkül telepítjük
+                import subprocess
+                try:
+                    subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
+                                    "-r", os.path.join(updater.app_dir(), "requirements.txt")],
+                                   timeout=300, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                except (OSError, subprocess.SubprocessError):
+                    pass
+            return res
 
         def done(res, err):
             self.btn_upd_check.state(["!disabled"])
@@ -2200,7 +2209,8 @@ def main():
         import subprocess
         cmd, cwd = updater.restart_command()
         try:
-            subprocess.Popen(cmd, cwd=cwd, close_fds=True)
+            fl = (getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)) if os.name == "nt" else 0
+            subprocess.Popen(cmd, cwd=cwd, close_fds=True, creationflags=fl)
         except OSError:
             pass
 

@@ -13,9 +13,6 @@ if errorlevel 1 (
   echo    A telepítő első képernyőjén pipáld be: "Add python.exe to PATH", majd Install Now.
   echo 3. Close this window and run START.bat again. / Zárd be ezt az ablakot, és futtasd újra a START.bat-ot.
   echo.
-  echo Tip: no Python needed if you use Orbiq.exe from the Releases page on GitHub.
-  echo Tipp: Python nélkül is megy az Orbiq.exe a GitHub Releases oldaláról.
-  echo.
   start https://www.python.org/downloads/windows/
   pause
   exit /b 1
