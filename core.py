@@ -39,7 +39,7 @@ DEFAULT_CONFIG = {
                  "switch_margin": 10.0, "min_dwell": 30.0, "pass_margin": 3.0,
                  "mode": "selected", "pinned": None, "schedule": [], "skipped": []},
     "time": {"use_correction": True},
-    "ui": {"maximized": True, "language": "auto"},
+    "ui": {"maximized": True, "language": "auto", "check_updates": True},
     "sats": [],
 }
 

@@ -15,6 +15,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import core
 import skyplot
+import updater
 from core import Engine, SatEntry
 import i18n
 import storage
@@ -619,6 +620,9 @@ class App(tk.Tk):
                                                            parent=self))
         self.bg.run(engine.measure_ntp, self._ntp_done)
         self.after(3000, self.auto_tle)
+        self._restart = False
+        if cfg_ui_check(engine) and updater.can_self_update()[0]:
+            self.after(8000, lambda: self.check_update(False))
         self._fast_snap = None
         self._ui_ema = {"total": 0.0}
         self._slow_log_t = 0.0
@@ -962,8 +966,31 @@ class App(tk.Tk):
                                                                       padx=(0, 8), pady=(0, 6))
         self._refresh_datainfo()
 
+        # frissítés
+        up = ttk.LabelFrame(outer, text=tl("update.title"), padding=14)
+        up.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 8))
+        self._upd = None
+        self.v_upd = tk.StringVar()
+        ttk.Label(up, text=tl("update.current", ver=build_id())).grid(row=0, column=0, columnspan=3, sticky="w")
+        self.btn_upd_check = ttk.Button(up, text=tl("update.check"), command=lambda: self.check_update(True))
+        self.btn_upd_check.grid(row=1, column=0, sticky="w", pady=(8, 0))
+        self.btn_upd_install = ttk.Button(up, text=tl("update.install"), style="Accent.TButton",
+                                          command=self.install_update, state="disabled")
+        self.btn_upd_install.grid(row=1, column=1, sticky="w", padx=8, pady=(8, 0))
+        ttk.Label(up, textvariable=self.v_upd, wraplength=620, justify="left").grid(row=1, column=2, sticky="w", padx=8,
+                                                                                    pady=(8, 0))
+        v["check_updates"] = tk.BooleanVar(value=bool(cfg.get("ui", {}).get("check_updates", True)))
+        ttk.Checkbutton(up, text=tl("update.auto"), variable=v["check_updates"]).grid(row=2, column=0, columnspan=3,
+                                                                                    sticky="w", pady=(8, 0))
+        ttk.Label(up, text=tl("update.hint"), style="Hint.TLabel", wraplength=900, justify="left").grid(
+            row=3, column=0, columnspan=3, sticky="w", pady=(4, 0))
+        can, why = updater.can_self_update()
+        if not can:
+            self.v_upd.set(tl("update.cannot_" + why))
+            self.btn_upd_check.state(["disabled"])
+
         ttk.Button(outer, text=tl("settings.alkalmaz_es_mentes"), style="Big.TButton", command=self.apply_settings).grid(
-            row=3, column=0, columnspan=2, sticky="e", pady=4)
+            row=4, column=0, columnspan=2, sticky="e", pady=4)
 
     # ---- „Műholdak” fül: a hozzáadott műholdak nagy, áttekinthető listája ----------------
     SAT_HEADS = ("main.be", "list.h_name", "list.h_norad", "list.h_freq", "list.h_mode", "list.h_minel", "list.h_rec",
@@ -1487,6 +1514,55 @@ class App(tk.Tk):
         if need:
             self.bg.run(work, lambda r, err: self.request_passes(force=True))
 
+    def check_update(self, manual: bool):
+        """Frissítés keresése a háttérben. manual: a felhasználó kérte (látható állapotüzenettel)."""
+        if manual:
+            self.v_upd.set(tl("update.checking"))
+        self.bg.run(lambda: updater.check(build_id()), lambda r, e: self._update_checked(manual, r, e))
+
+    def _update_checked(self, manual: bool, r, err):
+        if err or not r:
+            r = {"state": "error", "error": str(err)}
+        self._upd = r
+        if r["state"] == "available":
+            self.v_upd.set(tl("update.available", short=r["short"], date=r["date"]))
+            self.btn_upd_install.state(["!disabled"])
+            if not manual:
+                self.engine.log.append((time.time(), tl("update.log_available", short=r["short"], date=r["date"])))
+        elif r["state"] == "current":
+            self.btn_upd_install.state(["disabled"])
+            if manual:
+                self.v_upd.set(tl("update.up_to_date", short=r["short"], date=r["date"]))
+        elif manual:
+            self.v_upd.set(tl("update.error", err=r.get("error") or "?"))
+
+    def install_update(self):
+        r = self._upd
+        if not r or r.get("state") != "available":
+            return
+        if not messagebox.askyesno(tl("update.title_confirm"), tl(
+                "update.confirm", short=r["short"], date=r["date"],
+                changes="\n".join("• " + c for c in r["changes"][:8]) or "–"), parent=self):
+            return
+        self.btn_upd_install.state(["disabled"])
+        self.btn_upd_check.state(["disabled"])
+        self.v_upd.set(tl("update.downloading"))
+
+        def work():
+            return updater.install_zip(updater.download(r["sha"]))
+
+        def done(res, err):
+            self.btn_upd_check.state(["!disabled"])
+            if err:
+                self.v_upd.set("")
+                self.btn_upd_install.state(["!disabled"])
+                messagebox.showerror(tl("update.title_confirm"), tl("update.failed", err=err), parent=self)
+                return
+            messagebox.showinfo(tl("update.title_confirm"), tl("update.done"), parent=self)
+            self._restart = True
+            self.on_close()
+        self.bg.run(work, done)
+
     def reset_choices(self):
         if not messagebox.askyesno(tl("app.reset_title"), tl("app.reset_ask")):
             return
@@ -1629,7 +1705,7 @@ class App(tk.Tk):
             tracking=dict(min_elev=minel, switch_margin=margin, min_dwell=dwell, pass_margin=pmargin),
             station=dict(lat=lat, lon=lon, alt_m=alt, gps_port=v["gps_port"].get().strip(), gps_baud=baud),
             time_=dict(use_correction=v["corr"].get()),
-            ui=dict(maximized=bool(v["maximized"].get()),
+            ui=dict(maximized=bool(v["maximized"].get()), check_updates=bool(v["check_updates"].get()),
                     language=self._lang_by_name.get(v["language"].get(), i18n.current())))
         self.request_passes(force=True)
         self.v_locmsg.set(tl("app.mentve"))
@@ -2089,6 +2165,10 @@ class App(tk.Tk):
         self.destroy()
 
 
+def cfg_ui_check(engine) -> bool:
+    return bool(engine.cfg.get("ui", {}).get("check_updates", True))
+
+
 def _taskbar_identity():
     """Windows: saját alkalmazás-azonosító, hogy a tálca az Orbiq ikonját mutassa (ne a Python-ét)."""
     if os.name != "nt":
@@ -2110,7 +2190,15 @@ def main():
         pass
     engine = Engine(cfg)
     engine.start()
-    App(engine).mainloop()
+    app = App(engine)
+    app.mainloop()
+    if getattr(app, "_restart", False):               # frissítés után: az új változat indítása (a beállítások már mentve)
+        import subprocess
+        cmd, cwd = updater.restart_command()
+        try:
+            subprocess.Popen(cmd, cwd=cwd, close_fds=True)
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":
