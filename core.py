@@ -727,6 +727,50 @@ class Engine(threading.Thread):
             self._build_model(s)
             self.save()
 
+    SATLIST_FIELDS = ("norad", "name", "enabled", "record", "min_elev", "freq_hz", "freq_desc", "mode", "offset_hz",
+                      "transmitters", "radio")
+
+    def export_satlist(self) -> dict:
+        """Megosztható műholdlista: csak a műholdak adatai - állomás-helyzet, beállítások, TLE nincs benne."""
+        with self.lock:
+            rows = []
+            for s in self.sats.values():
+                d = asdict(s)
+                rows.append({k: d[k] for k in self.SATLIST_FIELDS if k in d})
+        return {"orbiq_satlist": 1, "sats": rows}
+
+    def import_satlist(self, data: dict, replace: bool = False):
+        """Visszaad: (új, frissített, [az új/frissített műholdak NORAD-jai]). A pályaadatot (TLE) később kell letölteni."""
+        if not isinstance(data, dict) or data.get("orbiq_satlist") != 1 or not isinstance(data.get("sats"), list):
+            raise ValueError("not a satellite list")
+        rows = []
+        for d in data["sats"]:
+            try:
+                n = int(d["norad"])
+                if n <= 0:
+                    raise ValueError
+            except (KeyError, TypeError, ValueError):
+                continue
+            rows.append((n, {k: d[k] for k in self.SATLIST_FIELDS if k in d and k != "norad"}))
+        added = updated = 0
+        touched = []
+        with self.lock:
+            if replace:
+                for n in list(self.sats):
+                    if n not in {r[0] for r in rows}:
+                        self.remove_sat(n)
+            for n, kw in rows:
+                if n in self.sats:
+                    self.update_sat(n, **kw)
+                    updated += 1
+                else:
+                    s = SatEntry.from_dict({"norad": n, **kw})
+                    self.sats[n] = s
+                    added += 1
+                touched.append(n)
+            self.save()
+        return added, updated, touched
+
     def remove_sat(self, norad: int):
         with self.lock:
             if self.pinned == norad:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import os
 import queue
 import sys
@@ -749,7 +750,9 @@ class App(tk.Tk):
                                (tl("main.kovetes_be_ki"), self.toggle_sat, "TButton"), (tl("main.torles"), self.delete_sat, "TButton"),
                                (tl("main.tle_frissitese"), self.refresh_tle, "TButton"),
                                (tl("main.tle_all"), self.refresh_all_tle, "TButton"),
-                               (tl("main.reset_choices"), self.reset_choices, "TButton")):
+                               (tl("main.reset_choices"), self.reset_choices, "TButton"),
+                               (tl("main.list_save"), self.export_satlist_file, "TButton"),
+                               (tl("main.list_load"), self.import_satlist_file, "TButton")):
             ttk.Button(bt, text=text, command=cmd, style=sty).pack(side="left", padx=(0, 6))
 
         # áthaladások
@@ -1425,6 +1428,63 @@ class App(tk.Tk):
         self.engine.toggle_skip(n, p.los)
         self.next_pass.pop(n, None)            # a „következő áthaladás” újraszámolása
         self.fill_passes()
+
+    def export_satlist_file(self):
+        data = self.engine.export_satlist()
+        dest = filedialog.asksaveasfilename(parent=self, title=tl("msg.satlist_save_title"), defaultextension=".json",
+                                            initialfile=f"orbiq_satlist_{dt.date.today():%Y%m%d}.json",
+                                            filetypes=[("Orbiq satellite list", "*.json")])
+        if not dest:
+            return
+        try:
+            with open(dest, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=1)
+        except OSError as e:
+            messagebox.showerror(tl("msg.title_error"), str(e), parent=self)
+            return
+        messagebox.showinfo(tl("msg.satlist_save_title"), tl("msg.satlist_saved", n=len(data["sats"]), path=dest),
+                            parent=self)
+
+    def import_satlist_file(self):
+        src = filedialog.askopenfilename(parent=self, title=tl("msg.satlist_load_title"),
+                                         filetypes=[("Orbiq satellite list", "*.json"), ("*", "*.*")])
+        if not src:
+            return
+        try:
+            with open(src, encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, dict) or data.get("orbiq_satlist") != 1 or not isinstance(data.get("sats"), list):
+                raise ValueError("bad")
+        except (OSError, ValueError):
+            messagebox.showerror(tl("msg.title_error"), tl("msg.satlist_bad"), parent=self)
+            return
+        ans = messagebox.askyesnocancel(tl("msg.satlist_load_title"), tl("msg.satlist_ask", n=len(data["sats"])),
+                                        parent=self)
+        if ans is None:
+            return
+        e = self.engine
+        try:
+            added, updated, touched = e.import_satlist(data, replace=not ans)
+        except ValueError:
+            messagebox.showerror(tl("msg.title_error"), tl("msg.satlist_bad"), parent=self)
+            return
+        e.log.append((e.now(), tl("log.satlist_loaded", added=added, updated=updated)))
+        self.next_pass.clear()
+        self.all_passes.clear()
+        self.fill_passes()
+        messagebox.showinfo(tl("msg.satlist_load_title"), tl("msg.satlist_done", added=added, updated=updated),
+                            parent=self)
+        need = [n for n in touched if n in e.sats and not e.sats[n].tle1]
+
+        def work():
+            for n in need:
+                try:
+                    e.refresh_tle(n)
+                except Exception as ex:          # noqa: BLE001
+                    e.log.append((e.now(), tl("app.tle_frissites_sikertelen_n", n=n, e=ex)))
+                time.sleep(0.5)
+        if need:
+            self.bg.run(work, lambda r, err: self.request_passes(force=True))
 
     def reset_choices(self):
         if not messagebox.askyesno(tl("app.reset_title"), tl("app.reset_ask")):
