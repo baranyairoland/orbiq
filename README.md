@@ -51,7 +51,7 @@ To update later you do not have to download the ZIP again: use **Settings → Up
 1. In SDR++: add the **rigctl_server** module, port `4532`, press *Start*.
 2. In Orbiq: *Settings* → enter your position → *Apply and save*, then *Add satellite*.
 
-If you want a standalone `.exe`, you can build one yourself from the source with PyInstaller.
+If you want a standalone `.exe`, you can build one yourself from the source with **`BUILD_EXE.bat`** (result: `dist\Orbiq.exe`).
 
 ## Status
 Early development. Tested on live passes with SDR++ (UmKA-1). Feedback and bug reports are welcome.

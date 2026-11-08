@@ -39,7 +39,7 @@ A program későbbi frissítéséhez nem kell újra letöltened a ZIP-et: a **Be
 2. SDR++-ban: *Module Manager* → `rigctl_server` hozzáadása → port `4532` → *Start*. A Beállítások fülön a **Kapcsolat tesztelése** gombbal ellenőrizheted.
 3. **Követés** fül → **Műhold hozzáadása**: NORAD ID (pl. `25544`), Keresés, válaszd ki a frekvenciát, Mentés.
 
-Ha valaki saját, önálló `.exe`-t szeretne, a PyInstaller segítségével magának lefordíthatja a forrásból.
+Aki saját, önálló `.exe`-t szeretne, magának lefordíthatja a forrásból a **`BUILD_EXE.bat`**-tal (eredmény: `dist\Orbiq.exe`).
 
 ## Az adataid és a biztonsági mentés
 Minden adatod (műholdlista, frekvenciák, állomás helyzete, ütemezés, TLE-k) a program mellett, a **`data`** mappában
