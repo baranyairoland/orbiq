@@ -750,9 +750,7 @@ class App(tk.Tk):
                                (tl("main.kovetes_be_ki"), self.toggle_sat, "TButton"), (tl("main.torles"), self.delete_sat, "TButton"),
                                (tl("main.tle_frissitese"), self.refresh_tle, "TButton"),
                                (tl("main.tle_all"), self.refresh_all_tle, "TButton"),
-                               (tl("main.reset_choices"), self.reset_choices, "TButton"),
-                               (tl("main.list_save"), self.export_satlist_file, "TButton"),
-                               (tl("main.list_load"), self.import_satlist_file, "TButton")):
+                               (tl("main.reset_choices"), self.reset_choices, "TButton")):
             ttk.Button(bt, text=text, command=cmd, style=sty).pack(side="left", padx=(0, 6))
 
         # áthaladások
@@ -999,6 +997,9 @@ class App(tk.Tk):
         bt.grid(row=2, column=0, columnspan=2, sticky="w", pady=(10, 0))
         ttk.Button(bt, text=tl("list.copy"), command=self.copy_satlist).pack(side="left", padx=(0, 6))
         ttk.Button(bt, text=tl("list.save"), command=self.save_satlist).pack(side="left", padx=(0, 6))
+        ttk.Separator(bt, orient="vertical").pack(side="left", fill="y", padx=(6, 12), pady=2)
+        ttk.Button(bt, text=tl("main.list_save"), command=self.export_satlist_file).pack(side="left", padx=(0, 6))
+        ttk.Button(bt, text=tl("main.list_load"), command=self.import_satlist_file).pack(side="left", padx=(0, 6))
         self.v_satmsg = tk.StringVar()
         ttk.Label(box, textvariable=self.v_satmsg, style="Hint.TLabel").grid(row=3, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Label(box, text=tl("list.hint"), style="Hint.TLabel").grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 0))
