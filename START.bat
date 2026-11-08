@@ -33,4 +33,5 @@ if errorlevel 1 (
   if errorlevel 1 pause
 ) else (
   start "" pyw orbiq.py
+  exit
 )
