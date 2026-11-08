@@ -1343,6 +1343,10 @@ class App(tk.Tk):
                     self.ptree.see(str(next_idx))
                 else:
                     self.ptree.yview_moveto(0)
+                if passes and (self.sel_pass is None or self.sel_pass[0] != n) and self._jump is None:
+                    first = next_idx if next_idx is not None else 0     # automatikusan kijelöljük az első (következő megfelelő) áthaladást
+                    self.ptree.selection_set(str(first))
+                    self.on_pass_select()
             elif y0 is not None:             # ugyanaz a műhold: marad ott, ahol a felhasználó görgetett
                 self.ptree.yview_moveto(y0)
         except (tk.TclError, AttributeError):
