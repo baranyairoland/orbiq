@@ -1677,10 +1677,16 @@ class App(tk.Tk):
             self.engine.log.append((time.time(), tl("app.feluleti_hiba_e_r", e=e)))
         total = time.perf_counter() - t0
         now = time.time()
-        if total > 0.15 and now - getattr(self, "_slow_log_t", 0) > 120:      # lassú felületfrissítés: a napló mutatja, mi viszi el az időt
+        # Mozgóátlag: az indításkori egyszeri lassúság (betűtípus-, képtár-betöltés) nem számít, csak a tartós lassúság.
+        ema = getattr(self, "_ema", None)
+        if ema is None:
+            ema = self._ema = {"total": 0.0}
+        for k, v in (("total", total), *parts.items()):
+            ema[k] = ema.get(k, 0.0) * 0.9 + v * 0.1
+        if ema["total"] > 0.08 and now - getattr(self, "_slow_log_t", 0) > 120:      # tartósan lassú felületfrissítés -> napló
             self._slow_log_t = now
-            top = sorted(parts.items(), key=lambda kv: -kv[1])[:3]
-            self.engine.log.append((now, tl("app.slow_ui", ms=int(total * 1000),
+            top = sorted(((k, v) for k, v in ema.items() if k != "total"), key=lambda kv: -kv[1])[:3]
+            self.engine.log.append((now, tl("app.slow_ui", ms=int(ema["total"] * 1000),
                                             top=", ".join(f"{k} {int(v * 1000)} ms" for k, v in top))))
         self.after(250, self.refresh)
 
