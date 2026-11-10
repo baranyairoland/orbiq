@@ -536,6 +536,7 @@ class Engine(threading.Thread):
         self.recording = False
         self.last_sent = None
         self.log = deque(maxlen=300)
+        self._pstat = {"n": 0, "fail": 0, "gap_max": 0.0, "last": None, "fail_log": 0.0}
         self.sat_snap = {}
         self.tracks = {}
         self.tracks_pub = {}
@@ -563,7 +564,10 @@ class Engine(threading.Thread):
         return time.time() + off
 
     def _log(self, msg: str):
-        self.log.append((self.now(), msg))
+        t = self.now()
+        self.log.append((t, msg))
+        if self.autosave:                 # a napló fájlba is kerül (data/logs/orbiq-ÉÉÉÉ-HH-NN.log); a tesztek nem írnak fájlt
+            storage.append_log(t, msg)
 
     def location_ok(self) -> bool:
         st = self.cfg["station"]
@@ -916,6 +920,8 @@ class Engine(threading.Thread):
     # ---- fő ciklus ------------------------------------------------------
     def run(self):
         _win_timer(True)
+        if self.autosave:
+            storage.prune_logs()
         last_sel = 0.0
         next_t = time.perf_counter()
         try:
@@ -1046,6 +1052,10 @@ class Engine(threading.Thread):
             self._log(tl("log.felvetel_leallitva_los"))
         self.current = new
         self.last_sent = None
+        if old is not None and self._pstat["n"] + self._pstat["fail"] > 0:        # összegzés az áthaladásról
+            self._log(tl("log.pass_summary", p=self.sats[old].name if old in self.sats else old, n=self._pstat["n"],
+                         f=self._pstat["fail"], g=self._pstat["gap_max"]))
+        self._pstat = {"n": 0, "fail": 0, "gap_max": 0.0, "last": None, "fail_log": 0.0}
         if new is None:
             if old is not None:
                 self._log(tl("log.kovetes_vege_p", p=self.sats[old].name if old in self.sats else old))
@@ -1067,9 +1077,23 @@ class Engine(threading.Thread):
         shift = doppler_shift_hz(s.freq_hz, o.rr)
         f = s.freq_hz + shift + s.offset_hz
         fi = int(round(f))
+        tm = time.monotonic()
+        ps = self._pstat
+        lim = max(1.0, 3 * float(self.cfg["rig"].get("interval_ms", 100)) / 1000.0)
+        if ps["last"] is not None and tm - ps["last"] > lim:       # a motor a megszokott lépésköz többszörösénél tovább nem küldött frekvenciát
+            self._log(tl("log.gap", p=s.name or n, g=tm - ps["last"]))
+        if ps["last"] is not None:
+            ps["gap_max"] = max(ps["gap_max"], tm - ps["last"])
+        ps["last"] = tm
         if fi != self.last_sent:
             if self.rig.set_freq(fi):
                 self.last_sent = fi
+                ps["n"] += 1
+            else:
+                ps["fail"] += 1
+                if tm - ps["fail_log"] > 5.0:                      # legfeljebb 5 másodpercenként naplózunk hibát
+                    ps["fail_log"] = tm
+                    self._log(tl("log.send_fail", p=s.name or n, err=self.rig.last_error or "?"))
         # felvétel: csak amíg a műhold a minimum elevációja fölött van
         rec_ok = self._want_record(s) and o.el >= self.eff_min_elev(s)
         if self.recording and not rec_ok:

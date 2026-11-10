@@ -819,6 +819,20 @@ class App(tk.Tk):
         ls = ttk.Scrollbar(lb, orient="vertical", command=self.log.yview)
         ls.grid(row=0, column=1, sticky="ns")
         self.log.configure(yscrollcommand=ls.set)
+        ttk.Button(lb, text=tl("main.log_folder"), command=self.open_log_folder).grid(row=1, column=0, columnspan=2, sticky="w", pady=(6, 0))
+
+    def open_log_folder(self):
+        """A naplófájlok mappájának megnyitása a Windows Fájlkezelőben."""
+        d = storage.logs_dir()
+        try:
+            os.makedirs(d, exist_ok=True)
+            if sys.platform == "win32":
+                os.startfile(d)
+            else:
+                import subprocess
+                subprocess.Popen(["xdg-open", d])
+        except OSError as e:
+            messagebox.showerror(tl("main.log_folder"), f"{d}\n{e}")
 
     # ---- beállítások fül -------------------------------------------------
     def _build_settings(self, parent):

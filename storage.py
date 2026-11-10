@@ -72,6 +72,39 @@ def data_dir() -> str:
     return d
 
 
+LOG_KEEP_DAYS = 14
+
+
+def logs_dir() -> str:
+    return os.path.join(data_dir(), "logs")
+
+
+def append_log(ts: float, msg: str) -> None:
+    """Egy naplósor hozzáfűzése a napi naplófájlhoz (logs/orbiq-ÉÉÉÉ-HH-NN.log). Hiba esetén csendben kihagyja."""
+    try:
+        d = logs_dir()
+        os.makedirs(d, exist_ok=True)
+        lt = time.localtime(ts)
+        path = os.path.join(d, time.strftime("orbiq-%Y-%m-%d.log", lt))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S", lt) + ".%03d  " % int((ts % 1) * 1000) + msg.replace("\n", " ") + "\n")
+    except OSError:
+        pass
+
+
+def prune_logs(now: Optional[float] = None) -> None:
+    """A LOG_KEEP_DAYS napnál régebbi naplófájlok törlése."""
+    try:
+        d = logs_dir()
+        lim = (now or time.time()) - LOG_KEEP_DAYS * 86400
+        for fn in os.listdir(d):
+            p = os.path.join(d, fn)
+            if fn.startswith("orbiq-") and fn.endswith(".log") and os.path.getmtime(p) < lim:
+                os.remove(p)
+    except OSError:
+        pass
+
+
 def config_dir() -> str:
     return data_dir()
 
