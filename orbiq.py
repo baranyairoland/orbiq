@@ -682,6 +682,9 @@ class App(tk.Tk):
         self.cap_cd.pack(anchor="e")
         self.lbl_cd = tk.Label(cd, text="--:--:--", font=("Consolas", 22, "bold"), bg=P, fg=C["muted"], anchor="e")
         self.lbl_cd.pack(anchor="e")
+        # keskeny ablaknál az óra és a visszaszámláló élvez elsőbbséget: a bal oldali állapotsor csúszik alá, nem rájuk
+        info.pack_forget()
+        info.pack(side="left", padx=(28, 0), after=cd)
 
     def on_mode(self):
         m = self.v_mode.get()
