@@ -37,6 +37,7 @@
  "log.pass_summary": "Summary – {p}: {n} frequency commands, {f} errors, longest pause {g:.2f} s",
  "main.log_folder": "Open log folder",
  "topbar.next_pass_cap": "UNTIL SELECTED PASS STARTS – {p}",
+ "topbar.pass_los_cap": "UNTIL PASS ENDS (LOS) – {p}",
  "log.nincs_meres": "no measurement",
  "core.a_celestrak_nem_ismeri": "CelesTrak does not know this NORAD ID",
  "core.nem_erheto_el_ntp": "No NTP server reachable: {last}",

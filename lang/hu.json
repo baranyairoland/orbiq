@@ -37,6 +37,7 @@
  "log.pass_summary": "Összegzés – {p}: {n} frekvenciaparancs, {f} hiba, leghosszabb szünet {g:.2f} s",
  "main.log_folder": "Naplófájlok mappája",
  "topbar.next_pass_cap": "KIJELÖLT ÁTHALADÁS KEZDETÉIG – {p}",
+ "topbar.pass_los_cap": "ÁTHALADÁS VÉGÉIG (LOS) – {p}",
  "log.nincs_meres": "nincs mérés",
  "core.a_celestrak_nem_ismeri": "a CelesTrak nem ismeri ezt a NORAD azonosítót",
  "core.nem_erheto_el_ntp": "Nem érhető el NTP szerver: {last}",

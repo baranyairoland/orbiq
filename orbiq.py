@@ -675,8 +675,9 @@ class App(tk.Tk):
         self.lbl_utc = tk.Label(utc, text="--:--:--", font=("Consolas", 22, "bold"), bg=P, fg=C["blue"], anchor="e")
         self.lbl_utc.pack(anchor="e")
         # visszaszámláló a következő áthaladás kezdetéig (az óra bal oldalán)
+        tk.Frame(bar, bg=C["border"], width=1).pack(side="right", fill="y", padx=16, pady=4)
         cd = tk.Frame(bar, bg=P)
-        cd.pack(side="right", padx=(0, 28))
+        cd.pack(side="right", padx=(0, 0))
         self.cap_cd = tk.Label(cd, text="", font=(FONT, 8, "bold"), bg=P, fg=C["muted"], anchor="e")
         self.cap_cd.pack(anchor="e")
         self.lbl_cd = tk.Label(cd, text="--:--:--", font=("Consolas", 22, "bold"), bg=P, fg=C["muted"], anchor="e")
@@ -1914,7 +1915,7 @@ class App(tk.Tk):
         self._cfg(self.cap_utc, text=tl("app.clock_utc", date=f"{u:%Y.%m.%d.}") if u.date() != lt.date() else "UTC")
 
     def _update_countdown(self, snap):
-        """Visszaszámláló a lenti táblában kijelölt áthaladás kezdetéig (AOS), mínuszban; kezdés után az eltelt idő pluszban."""
+        """Visszaszámláló a lenti táblában kijelölt áthaladás kezdetéig (AOS), mínuszban; kezdés után a LOS-ig hátralévő idő mínuszban."""
         sp = self.sel_pass
         if sp is None:
             self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p="—"))
@@ -1926,12 +1927,17 @@ class App(tk.Tk):
         left = abs(d)
         h, r = divmod(left, 3600)
         m, s_ = divmod(r, 60)
+        name = (sat.name if sat else "") or str(n)
         if d > 0:
-            sign, col = "-", (C["red"] if d < 60 else (C["amber"] if d < 300 else C["green"]))
-        else:
-            sign, col = "+", C["blue"]
-        self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p=(sat.name if sat else "") or str(n)))
-        self._cfg(self.lbl_cd, text=f"{sign}{h:02d}:{m:02d}:{s_:02d}", fg=col)
+            col = C["red"] if d < 60 else (C["amber"] if d < 300 else C["green"])
+            self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p=name))
+        else:                                   # már fent van: a LOS-ig hátralévő idő mínuszban
+            left = max(0, int(p.los - snap["t"]))
+            h, r = divmod(left, 3600)
+            m, s_ = divmod(r, 60)
+            col = C["blue"] if left > 0 else C["muted"]
+            self._cfg(self.cap_cd, text=tl("topbar.pass_los_cap", p=name))
+        self._cfg(self.lbl_cd, text=f"-{h:02d}:{m:02d}:{s_:02d}", fg=col)
 
     def _next_key(self, s):
         st = self.engine.cfg["station"]
