@@ -1359,6 +1359,12 @@ class App(tk.Tk):
                     break
             else:
                 self.clear_pass()
+                if passes and self._jump is None:      # a kijelölt áthaladás lejárt: automatikusan a következőre ugrunk
+                    try:
+                        self.ptree.selection_set(str(next_idx if next_idx is not None else 0))
+                        self.on_pass_select()
+                    except (tk.TclError, AttributeError):
+                        pass
         try:
             if n != prev_n:                  # másik műhold: a következő megfelelő áthaladáshoz görgetünk, hogy ne maradjon rejtve
                 if next_idx is not None:
