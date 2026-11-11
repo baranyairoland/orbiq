@@ -36,6 +36,7 @@
  "log.send_fail": "rigctl: a frekvenciaküldés sikertelen ({p}): {err}",
  "log.pass_summary": "Összegzés – {p}: {n} frekvenciaparancs, {f} hiba, leghosszabb szünet {g:.2f} s",
  "main.log_folder": "Naplófájlok mappája",
+ "topbar.next_pass_cap": "KÖVETKEZŐ ÁTHALADÁS – {p}",
  "log.nincs_meres": "nincs mérés",
  "core.a_celestrak_nem_ismeri": "a CelesTrak nem ismeri ezt a NORAD azonosítót",
  "core.nem_erheto_el_ntp": "Nem érhető el NTP szerver: {last}",

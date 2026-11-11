@@ -674,6 +674,13 @@ class App(tk.Tk):
         self.cap_utc.pack(anchor="e")
         self.lbl_utc = tk.Label(utc, text="--:--:--", font=("Consolas", 22, "bold"), bg=P, fg=C["blue"], anchor="e")
         self.lbl_utc.pack(anchor="e")
+        # visszaszámláló a következő áthaladás kezdetéig (az óra bal oldalán)
+        cd = tk.Frame(bar, bg=P)
+        cd.pack(side="right", padx=(0, 28))
+        self.cap_cd = tk.Label(cd, text="", font=(FONT, 8, "bold"), bg=P, fg=C["muted"], anchor="e")
+        self.cap_cd.pack(anchor="e")
+        self.lbl_cd = tk.Label(cd, text="--:--:--", font=("Consolas", 22, "bold"), bg=P, fg=C["muted"], anchor="e")
+        self.lbl_cd.pack(anchor="e")
 
     def on_mode(self):
         m = self.v_mode.get()
@@ -1832,7 +1839,8 @@ class App(tk.Tk):
             if snap:
                 for name, fn, args in (
                         ("topbar", self._update_topbar, (snap,)), ("allpasses", self.request_all_passes, ()),
-                        ("next", self._refresh_next, ()), ("tree", self._update_tree, (snap,)),
+                        ("next", self._refresh_next, ()), ("countdown", self._update_countdown, (snap,)),
+                        ("tree", self._update_tree, (snap,)),
                         ("sats", self._update_satstab, (snap,)), ("freq", self._update_freq, (snap,)),
                         ("passhdr", self._update_passhdr, ()), ("ptable", self._check_ptable, ()),
                         ("passes", self.request_passes, ()), ("sky", self._draw_sky, (snap,)),
@@ -1904,6 +1912,31 @@ class App(tk.Tk):
         self._cfg(self.lbl_utc, text=f"{u:%H:%M:%S}")
         self._cfg(self.cap_local, text=tl("app.clock_local", date=f"{lt:%Y.%m.%d.}"))
         self._cfg(self.cap_utc, text=tl("app.clock_utc", date=f"{u:%Y.%m.%d.}") if u.date() != lt.date() else "UTC")
+
+    def _update_countdown(self, snap):
+        """Visszaszámláló a következő megfelelő áthaladás kezdetéig (AOS). Ütemezett módban a következő ütemezett áthaladásig."""
+        now = snap["t"]
+        best = None                                     # (aos, név)
+        if self.engine.mode == "passes":
+            nx = self.engine.next_scheduled(now)
+            if nx is not None and nx["aos"] > now:
+                best = (nx["aos"], nx["name"])
+        else:
+            for n, c in self.next_pass.items():
+                p = c["pass"]
+                if p is not None and p.aos > now and (best is None or p.aos < best[0]):
+                    s = self.engine.sats.get(n)
+                    best = (p.aos, (s.name if s else "") or str(n))
+        if best is None:
+            self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p="—"))
+            self._cfg(self.lbl_cd, text="--:--:--", fg=C["muted"])
+            return
+        left = max(0, int(best[0] - now))
+        h, r = divmod(left, 3600)
+        m, s_ = divmod(r, 60)
+        self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p=best[1]))
+        self._cfg(self.lbl_cd, text=f"{h:02d}:{m:02d}:{s_:02d}",
+                  fg=C["red"] if left < 60 else (C["amber"] if left < 300 else C["green"]))
 
     def _next_key(self, s):
         st = self.engine.cfg["station"]
