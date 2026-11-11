@@ -1914,29 +1914,24 @@ class App(tk.Tk):
         self._cfg(self.cap_utc, text=tl("app.clock_utc", date=f"{u:%Y.%m.%d.}") if u.date() != lt.date() else "UTC")
 
     def _update_countdown(self, snap):
-        """Visszaszámláló a következő megfelelő áthaladás kezdetéig (AOS). Ütemezett módban a következő ütemezett áthaladásig."""
-        now = snap["t"]
-        best = None                                     # (aos, név)
-        if self.engine.mode == "passes":
-            nx = self.engine.next_scheduled(now)
-            if nx is not None and nx["aos"] > now:
-                best = (nx["aos"], nx["name"])
-        else:
-            for n, c in self.next_pass.items():
-                p = c["pass"]
-                if p is not None and p.aos > now and (best is None or p.aos < best[0]):
-                    s = self.engine.sats.get(n)
-                    best = (p.aos, (s.name if s else "") or str(n))
-        if best is None:
+        """Visszaszámláló a lenti táblában kijelölt áthaladás kezdetéig (AOS), mínuszban; kezdés után az eltelt idő pluszban."""
+        sp = self.sel_pass
+        if sp is None:
             self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p="—"))
             self._cfg(self.lbl_cd, text="--:--:--", fg=C["muted"])
             return
-        left = max(0, int(best[0] - now))
+        n, p = sp
+        sat = self.engine.sats.get(n)
+        d = int(p.aos - snap["t"])
+        left = abs(d)
         h, r = divmod(left, 3600)
         m, s_ = divmod(r, 60)
-        self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p=best[1]))
-        self._cfg(self.lbl_cd, text=f"{h:02d}:{m:02d}:{s_:02d}",
-                  fg=C["red"] if left < 60 else (C["amber"] if left < 300 else C["green"]))
+        if d > 0:
+            sign, col = "-", (C["red"] if d < 60 else (C["amber"] if d < 300 else C["green"]))
+        else:
+            sign, col = "+", C["blue"]
+        self._cfg(self.cap_cd, text=tl("topbar.next_pass_cap", p=(sat.name if sat else "") or str(n)))
+        self._cfg(self.lbl_cd, text=f"{sign}{h:02d}:{m:02d}:{s_:02d}", fg=col)
 
     def _next_key(self, s):
         st = self.engine.cfg["station"]
